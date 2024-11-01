@@ -52,7 +52,6 @@ void inserir_tipo_linha_mat(Tipo_Mat_Esparsa *mat, int id){
         if((mat->qtd_colunas == 0 && id == 0)||(id>=mat->qtd_colunas)){
             mat->qtd_colunas = id + 1;
         }
-
     }
     else{
         tipo_linha *aux = mat->inicio;
@@ -96,7 +95,6 @@ void inserir_elemento_mat(int linha, int coluna, int value, Tipo_Mat_Esparsa *ma
         while((aux->proximo != NULL)&&(aux->proximo->ID_Coluna <= coluna)){ 
             aux = aux->proximo;
         }
-
         if((aux == NULL)||(aux->ID_Coluna != coluna)){
             inserir_tipo_linha_mat(mat, coluna);
  
@@ -108,20 +106,18 @@ void inserir_elemento_mat(int linha, int coluna, int value, Tipo_Mat_Esparsa *ma
             }
         }
 
-        if(aux->inicio == NULL){ //aqui começa a verificação das linhas
+        if(aux->inicio == NULL){ 
             tipo_elemento *aux3 = (tipo_elemento*)malloc(sizeof(tipo_elemento));
             aux3->ID_linha = linha;
             aux3->valor = value;
             aux3->proximo = NULL;
             aux->inicio = aux3;
-            //printf("o primeiro elemento tem valor %d\n", aux->inicio->valor);
             if((linha >= mat->qtd_linhas) || (linha == 0 && mat->qtd_linhas == 0)){
                 mat->qtd_linhas = linha + 1;
             }
         }
         else{
             tipo_elemento *aux2;
-
             aux2 = aux->inicio;
 
             if(aux2->ID_linha > linha){
@@ -130,22 +126,17 @@ void inserir_elemento_mat(int linha, int coluna, int value, Tipo_Mat_Esparsa *ma
                 aux3->valor = value;
                 aux3->proximo = aux2;
                 aux->inicio = aux3;
-                //printf("entrei aqui e tenho %d , %d\n", linha,coluna);
                 if((linha >= mat->qtd_linhas) || (linha == 0 && mat->qtd_linhas == 0)){
                     mat->qtd_linhas = linha + 1;
                 }
             }
             else{
-                //printf("entrei aqui e tenho %d , %d\n", linha,coluna);
                 while((aux2->proximo != NULL)&&(aux2->proximo->ID_linha <= linha)){
                     aux2 = aux2->proximo;
                 }
-                //printf("meu id apos entrar aqui e %d\n", aux2->ID_linha);
 
                 if(aux2->ID_linha == linha){
-                    //printf("troquei %d por ", aux2->valor);
                     aux2->valor = value;
-                    //printf("%d \n", aux2->valor);
                 }
                 else if((aux2->ID_linha != linha && aux2->proximo == NULL)||((aux2->ID_linha != linha) && (aux2->proximo->ID_linha > linha) && (aux2->proximo != NULL))){
                     tipo_elemento *novol = (tipo_elemento*)malloc(sizeof(tipo_elemento));
@@ -163,9 +154,7 @@ void inserir_elemento_mat(int linha, int coluna, int value, Tipo_Mat_Esparsa *ma
     else{
         inserir_tipo_linha_mat(mat,coluna);
         inserir_elemento_mat(linha,coluna,value,mat);
-        //printf("A matriz se encontra vazia!");
     }
-
 }
 
 int busca_matrizES(Tipo_Mat_Esparsa *mat,int l, int c){
@@ -192,19 +181,17 @@ int busca_matrizES(Tipo_Mat_Esparsa *mat,int l, int c){
                             return 0;
                         }
                     }
-                    else{
-                        return 0;
-                    }
                 }
-                else{
-                    return 0;
-                }
-            }
-            else{
-                return 0;
             }
         }
+        return 0;
     }
+    else{
+        printf("Matriz VAZIA");
+        return -1;
+    }
+    
+    return 0;
 }
 
 void imprimir_matrizES(Tipo_Mat_Esparsa *mat){
@@ -216,9 +203,6 @@ void imprimir_matrizES(Tipo_Mat_Esparsa *mat){
     for(int i=0; i<l; i++){
         matrizAux[i] = (int*)calloc(c,sizeof(int));
     }
-
-    tipo_linha *aux = mat->inicio;
-    tipo_elemento *aux2;
 
     for(int i = 0; i < l; i++){
         for(int j = 0; j < c; j++){
@@ -234,21 +218,131 @@ void imprimir_matrizES(Tipo_Mat_Esparsa *mat){
     free(matrizAux);
 }
 
+Tipo_Mat_Esparsa *multiplica_matrizes(Tipo_Mat_Esparsa *mat1, Tipo_Mat_Esparsa *mat2){
+    Tipo_Mat_Esparsa *matResult = criar_matriz_esparsa();
+    int soma;
+    if(mat1->qtd_colunas == mat2->qtd_linhas){
+
+        for(int i=0; i<mat1->qtd_linhas; i++){
+
+            for(int k = 0; k<mat2->qtd_colunas; k++){
+                soma = 0;
+                for(int j=0; j<mat1->qtd_colunas; j++){
+                    soma = soma + busca_matrizES(mat1,i,j) * busca_matrizES(mat2,j,k);
+                }
+                inserir_elemento_mat(i,k,soma,matResult);
+            }
+        }
+    }
+    return matResult;
+}
+
+Tipo_Mat_Esparsa *matriz_trasposta(Tipo_Mat_Esparsa *mat){
+
+    if(!verificar_mat_vazia(mat)){
+        Tipo_Mat_Esparsa *matT = criar_matriz_esparsa();
+
+        for(int i=0; i<mat->qtd_linhas; i++){
+
+            for(int j=0; j<mat->qtd_colunas; j++){
+                if(busca_matrizES(mat,i,j)!=0){
+                    inserir_elemento_mat(j,i,busca_matrizES(mat,i,j),matT);
+                }
+            }
+        }
+        imprimir_matrizES(matT);
+        return matT;
+    }
+    return 0;
+}
+
+Tipo_Mat_Esparsa *soma_matriz(Tipo_Mat_Esparsa *mat1, Tipo_Mat_Esparsa *mat2){
+    Tipo_Mat_Esparsa *matResult = criar_matriz_esparsa();
+    int soma;
+
+    if(mat1->qtd_colunas == mat2->qtd_colunas && mat1->qtd_linhas == mat2->qtd_linhas){
+        for(int i=0; i<mat1->qtd_linhas; i++){
+            soma = 0;
+            for(int j = 0; j<mat2->qtd_colunas; j++){
+                soma = busca_matrizES(mat1,i,j) + busca_matrizES(mat2,i,j);
+                inserir_elemento_mat(i,j,soma,matResult);
+            }
+        }
+    }
+    return matResult;
+}
+
+void apagar_matrizES(Tipo_Mat_Esparsa *mat){
+
+    if(mat != NULL){
+        tipo_linha *aux;
+        tipo_elemento *aux2;
+
+        while(mat->inicio != NULL){
+            aux = mat->inicio;
+
+            while(aux->inicio != NULL){
+                aux2 = aux->inicio;
+                aux->inicio = aux2->proximo;
+                free(aux2);
+            }
+            mat->inicio = aux->proximo;
+            free(aux);
+        }
+        free(mat);
+        free(aux);
+        free(aux2);
+
+        if(mat->inicio == NULL){
+            printf("\n\nMATRIZ APAGADA!");
+        }
+        else{
+            printf("\n\nERRO AO APAGAR MATRIZ!");
+        }
+    }
+
+}
+
 int main(){
     Tipo_Mat_Esparsa *matriz = criar_matriz_esparsa();
+    Tipo_Mat_Esparsa *matriz2 = criar_matriz_esparsa();
+    Tipo_Mat_Esparsa *matriz3 = criar_matriz_esparsa();
+    Tipo_Mat_Esparsa *matriz4 = criar_matriz_esparsa();
 
-    inserir_elemento_mat(4,5,4,matriz);
-    inserir_elemento_mat(0,0,4,matriz);
-    inserir_elemento_mat(4,4,17,matriz);
-    inserir_elemento_mat(4,4,18,matriz);
-    inserir_elemento_mat(2,2,3,matriz);  
-    inserir_elemento_mat(0,8,3,matriz); 
-    inserir_elemento_mat(4,7,3,matriz);
+    inserir_elemento_mat(0,0,1,matriz);
+    inserir_elemento_mat(0,1,2,matriz);
+    inserir_elemento_mat(1,0,4,matriz);
+    inserir_elemento_mat(1,1,0,matriz);
 
-    printf("\nQuantidade de colunas: %d\n", matriz->qtd_colunas);
-    printf("Quantidade de linhas: %d\n\n", matriz->qtd_linhas);
+    inserir_elemento_mat(0,0,1,matriz2);
+    inserir_elemento_mat(0,1,2,matriz2);
+    inserir_elemento_mat(1,0,3,matriz2);
+    inserir_elemento_mat(1,1,4,matriz2);
+
+    printf("Quantidade de colunas da Matriz A: %d\n", matriz->qtd_colunas);
+    printf("Quantidade de linhas da Matriz A: %d\n\n", matriz->qtd_linhas);
+    printf("Quantidade de colunas da Matriz B: %d\n", matriz2->qtd_colunas);
+    printf("Quantidade de linhas da Matriz B: %d\n\n", matriz2->qtd_linhas);
+    printf("Matriz A:\n\n");
     imprimir_matrizES(matriz);
+    printf("\n\nMatriz B:\n\n");
+    imprimir_matrizES(matriz2);
+
+    printf("\n\nMultiplicacao de Matrizes:\n\n");
+    matriz3 = multiplica_matrizes(matriz,matriz2);
+    imprimir_matrizES(matriz3);
+
+    printf("\n\nMatriz Transposta:\n\n");  
+    matriz_trasposta(matriz);
+
+    printf("\n\nSoma de Matrizes:\n\n");  
+    matriz4 = soma_matriz(matriz,matriz2);
+    imprimir_matrizES(matriz4);
+
+    apagar_matrizES(matriz3);
+    apagar_matrizES(matriz4);
+    apagar_matrizES(matriz2);
+    apagar_matrizES(matriz);
 
     return 0;
 }
-    
